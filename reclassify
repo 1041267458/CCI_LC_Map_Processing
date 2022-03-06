@@ -1,3 +1,5 @@
+% CCI land cover map legend table: https://maps.elie.ucl.ac.be/CCI/viewer/download/CCI-LC_Maps_Legend.pdf
+
 clear;
 clc;
 
