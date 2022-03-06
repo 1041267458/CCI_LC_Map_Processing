@@ -1,0 +1,74 @@
+clear;
+clc;
+
+
+% get basic information
+samplename = 'A1_CCI_China_lucc/CCI_cn1992albers.tif';
+[SS,R] = geotiffread(samplename); %get projection
+info = geotiffinfo(samplename); % get info
+
+[nrows,ncols] = size(SS);
+C = zeros(27,8);
+y= 0;
+for year = 2020:2020
+    y= y+1;
+    disp(year);
+    A = geotiffread(['A1_CCI_China_lucc/CCI_cn',num2str(year),'albers.tif']);
+    B = zeros(nrows,ncols);
+    %croplands(4): 10,11,12,20
+    o = find(A>=10 & A<=20); 
+    B(o) = 10;
+    C(y,1) = length(o); 
+    clear o; 
+    %mosaic croplands with natural vegetation(1): 30
+    o = find(A == 30); 
+    B(o) = 11;
+    C(y,2) = length(o); 
+    clear o; 
+    % forests(11): 50,60,61,62,70,71,72,80,81,82,90
+    o = find(A>=50 & A<=90); 
+    B(o) = 2;
+    C(y,3) = length(o);
+    clear o;  
+    % shurbland(3): 120,121,122；%changed 2021.10.07   
+    %o = find( A>=120 & A<=122); 
+    % shurbland(6): 40,100,110,120,121,122；
+    o = find(A==40 | A==100 | A==110 | A==120 | A==121 | A==122); 
+    B(o) = 3;
+    C(y,4) = length(o);
+    clear o; 
+    % grasslands(4): 40,100,110,130
+    %o = find(A==40 | A==100 | A==110 | A==130);  %changed 2021.10.07
+    % grasslands(1): 130
+    o = find( A==130); 
+    B(o) = 4;
+    C(y,5) = length(o);
+    clear o; 
+    % bare and sparse vegetation (9): 140,150,151,152,153,200,201,202,220；
+    o = find(A==140 | A==150 | A==151 | A==152 | A==153 | A==200 | A==201 | A==202 | A==220); 
+    B(o) = 5;
+    C(y,6) = length(o);
+    clear o;
+    % water body and wetland(4): 160,170,180，210；
+    o = find(A==160 | A==170 | A==180 | A==210); 
+    B(o) = 6;
+    C(y,7) = length(o);
+    clear o;
+    % urban and building(1): 190
+    o = find(A==190); 
+    B(o) = 7;
+    C(y,8) = length(o);
+    clear o;
+
+    clear A;
+    %output path
+    filename = ['A2_CCI_China_lucc_reclassify_2typesCroplands20211007/CCI_cn',num2str(year),'albers_reclassify_C8.tif'];
+    geotiffwrite(filename,B, R, 'GeoKeyDirectoryTag', info.GeoTIFFTags.GeoKeyDirectoryTag);
+end % end year loop
+C2 = C*0.3*0.3; %converting to unit with km2
+
+filename = 'step1_China_CCIreclassify_2typesCroplands20211007_countingArea.xlsx';
+xlswrite(filename,C,'CNarea_pixelnum','B2');
+xlswrite(filename,C2,'CNarea_km2','B2');
+fclose('all');
+
